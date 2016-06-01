@@ -1,0 +1,29 @@
+{
+  "name": "serverless-endpoint-helper",
+  "version": "1.0.0",
+  "description": "Serverless command line helper to create endpoints templates",
+  "main": "index.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SC5/serverless-endpoint-helper.git"
+  },
+  "keywords": [
+    "serverless",
+    "framework",
+    "plugin"
+  ],
+  "author": "Gibran Rodriguez (https://sc5.io)",
+  "license": "MIT",
+  "engines": {
+      "node": ">=4.0"
+    },
+  "bin": {},
+  "devDependencies": {},
+  "dependencies": {
+        "bluebird": "3.0.6",
+        "chai": "3.2.0",
+        "mocha": "2.2.5",
+        "lambda-wrapper": "^0.0.6"
+    }
+}
