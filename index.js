@@ -7,7 +7,6 @@
 
 const path  = require('path'),
   fs        = require('fs'),
-  lambdaWrapper = require('lambda-wrapper'),
   Path = require('path'),
   BbPromise = require('bluebird'); // Serverless uses Bluebird Promises and we recommend you do to because they provide more than your average Promise :)
 
@@ -36,12 +35,12 @@ module.exports = function(S) { // Always pass in the ServerlessPlugin Class
 
     constructor() {
       super();
-      this.name = 'io.sc5.mocha';
+      this.name = 'io.sc5.endpoint.helper';
     }
 
     /**
      * Register Actions
-     * - function mocha-create
+     * - function endpoint-create
      */
 
     registerActions() {
@@ -49,8 +48,8 @@ module.exports = function(S) { // Always pass in the ServerlessPlugin Class
       S.addAction(this._createAction.bind(this), {
         handler:       '_createAction',
         description:   'Create endpoint for function',
-        context:       'endpoint',
-        contextAction: 'create',
+        context:       'function',
+        contextAction: 'endpoint-create',
         options:       [{ // These must be specified in the CLI like this "-option true" or "-o true"
         }],
         parameters: [ // Use paths when you multiple values need to be input (like an array).  Input looks like this: "serverless custom run module1/function1 module1/function2 module1/function3.  Serverless will automatically turn this into an array and attach it to evt.options within your plugin
@@ -62,56 +61,9 @@ module.exports = function(S) { // Always pass in the ServerlessPlugin Class
         ]
       });
 
-      S.addAction(this._runAction.bind(this), {
-        handler:       '_runAction',
-        description:   'Create endpoint for function',
-        context:       'endpoint',
-        contextAction: 'create',
-        options:       [          {
-            option:      'region',
-            shortcut:    'r',
-            description: 'region you want to run your function in'
-          },
-          {
-            option:      'stage',
-            shortcut:    's',
-            description: 'stage you want to run your function in'
-          },
-          {
-            option:      'reporter',
-            shortcut:    'R',
-            description: 'specify the reporter to use'
-          },
-          {
-            option:      'reporter-options',
-            shortcut:    'O',
-            description: 'reporter-specific options'
-          }],
-        parameters: [ // Use paths when you multiple values need to be input (like an array).  Input looks like this: "serverless custom run module1/function1 module1/function2 module1/function3.  Serverless will automatically turn this into an array and attach it to evt.options within your plugin
-          {
-            parameter: 'paths',
-            description: 'Path to function to test. If not defined, test all functions.',
-            position: '0->' // Can be: 0, 0-2, 0->  This tells Serverless which params are which.  3-> Means that number and infinite values after it.
-          }
-        ]
-      });
-
       return BbPromise.resolve();
     }
 
-    /**
-     * Register Hooks
-     * -  function create (post) creates mocha test file
-     */
-
-    registerHooks() {
-      S.addHook(this._hookPostFuncCreate.bind(this), {
-        action: 'functionCreate',
-        event:  'post'
-      });
-
-      return BbPromise.resolve();
-    }
 
     /**
      * Custom action serverless function mocha-create functioName
@@ -127,60 +79,6 @@ module.exports = function(S) { // Always pass in the ServerlessPlugin Class
       return createTest(evt.options.paths[0]);
     }
 
-    /**
-     * Custom action serverless function mocha-create functioName
-     */
-
-    _runAction(evt) {
-      return new BbPromise(function(resolve, reject) {
-          let funcName = evt.options.paths;
-          let mocha = new Mocha();
-          //This could pose as an issue if several functions share a common ENV name but different values.
-          
-          let stage = evt.options.stage || S.getProject().getAllStages()[0].name;
-          let region = evt.options.region || S.getProject().getAllRegions(stage)[0].name;
-
-          SetEnvVars(evt.options.paths, {
-            stage: stage,
-            region: region
-          });
-
-          getFilePaths(evt.options.paths)
-          .then(function(paths) {
-              paths.forEach(function(path,idx) {
-                mocha.addFile(path);
-              })
-              var reporter = evt.options.reporter;
-              if ( reporter !== null) {
-                var reporterOptions = {};
-                if (evt.options["reporter-options"] !== null) {
-                  evt.options["reporter-options"].split(",").forEach(function(opt) {
-                    var L = opt.split("=");
-                    if (L.length > 2 || L.length === 0) {
-                      throw new Error("invalid reporter option '" + opt + "'");
-                    } else if (L.length === 2) {
-                      reporterOptions[L[0]] = L[1];
-                    } else {
-                      reporterOptions[L[0]] = true;
-                    }
-                  });
-                }
-                mocha.reporter(reporter, reporterOptions)
-              }
-              mocha.run(function(failures){
-                process.on('exit', function () {
-                  process.exit(failures);  // exit with non-zero status if there were failures
-                });
-              });
-          }, function(error) {
-
-            return reject(error);
-          });
-      });
-    }
-    /**
-     * Hook for creating the mocha test placeholder after function creation
-     */
 
     _hookPostFuncCreate(evt) {
       // TODO: only run with runtime node4.3
@@ -306,5 +204,3 @@ describe('${funcName}', () => {
   return PluginBoilerplate;
 };
 
-module.exports.lambdaWrapper = lambdaWrapper;
-module.exports.chai = chai;
