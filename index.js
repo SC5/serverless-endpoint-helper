@@ -1,13 +1,8 @@
 'use strict';
 
-/**
- * serverless-endpoint-helper
- * - a plugin for easier endpoint creation
- */
 
 const path  = require('path'),
   fs        = require('fs'),
-  Path = require('path'),
   BbPromise = require('bluebird'); // Serverless uses Bluebird Promises and we recommend you do to because they provide more than your average Promise :)
 
 module.exports = function(S) { // Always pass in the ServerlessPlugin Class
@@ -28,35 +23,28 @@ module.exports = function(S) { // Always pass in the ServerlessPlugin Class
 
   class PluginBoilerplate extends S.classes.Plugin {
 
-    /**
-     * Constructor
-     * - Keep this and don't touch it unless you know what you're doing.
-     */
-
     constructor() {
       super();
-      this.name = 'io.sc5.endpoint.helper';
+      this.name = 'myPlugin';
     }
-
-    /**
-     * Register Actions
-     * - function endpoint-create
-     */
 
     registerActions() {
 
-      S.addAction(this._createAction.bind(this), {
-        handler:       '_createAction',
-        description:   'Create endpoint for function',
-        context:       'function',
-        contextAction: 'endpoint-create',
-        options:       [{ // These must be specified in the CLI like this "-option true" or "-o true"
+      S.addAction(this._customAction.bind(this), {
+        handler:       'customAction',
+        description:   'An action to create endpoint template',
+        context:       'endpoint',
+        contextAction: 'create',
+        options:       [{
+          option:      'option',
+          shortcut:    'o',
+          description: 'test option 1'
         }],
-        parameters: [ // Use paths when you multiple values need to be input (like an array).  Input looks like this: "serverless custom run module1/function1 module1/function2 module1/function3.  Serverless will automatically turn this into an array and attach it to evt.options within your plugin
+        parameters: [
           {
             parameter: 'paths',
-            description: 'Path to function to test. If not defined, test all functions.',
-            position: '0->' // Can be: 0, 0-2, 0->  This tells Serverless which params are which.  3-> Means that number and infinite values after it.
+            description: 'One or multiple paths to your function',
+            position: '0->'
           }
         ]
       });
@@ -64,143 +52,105 @@ module.exports = function(S) { // Always pass in the ServerlessPlugin Class
       return BbPromise.resolve();
     }
 
+    registerHooks() {
 
-    /**
-     * Custom action serverless function mocha-create functioName
-     */
+      S.addHook(this._hookPre.bind(this), {
+        action: 'functionRun',
+        event:  'pre'
+      });
 
-    _createAction(evt) {
-      if (S.getProject().getFunction(evt.options.paths[0]) === undefined) {
-        return new BbPromise(function(resolve, reject) {
-          reject(`MochaPluginError: Function ${evt.options.paths[0]} does not exist in your project`);
-        });
-      }
+      S.addHook(this._hookPost.bind(this), {
+        action: 'functionRun',
+        event:  'post'
+      });
 
-      return createTest(evt.options.paths[0]);
+      return BbPromise.resolve();
     }
 
+    _customAction(evt) {
 
-    _hookPostFuncCreate(evt) {
-      // TODO: only run with runtime node4.3
-      if (evt.options.runtime != 'nodejs4.3') {
-        console.log(evt.options.runtime);
-        return;
-      }
-      let parsedPath = path.parse(evt.options.path);
-      let funcName = parsedPath.base;
+      let _this = this;
 
-      return createTest(funcName);
+      return new BbPromise(function (resolve, reject) {
+
+        // console.log(evt)           // Contains Action Specific data
+        // console.log(_this.S)       // Contains Project Specific data
+        // console.log(_this.S.state) // Contains tons of useful methods for you to use in your plugin.  It's the official API for plugin developers.
+
+        console.log('-------------------');
+        console.log('YOU JUST RAN YOUR CUSTOM ACTION, NICE!');
+        console.log('-------------------');
+
+        return resolve(evt);
+
+      });
+    }
+
+    _hookPre(evt) {
+
+      let _this = this;
+
+      return new BbPromise(function (resolve, reject) {
+
+        console.log('-------------------');
+        console.log('YOUR SERVERLESS PLUGIN\'S CUSTOM "PRE" HOOK HAS RUN BEFORE "FunctionRun"');
+        console.log('-------------------');
+
+        return resolve(evt);
+
+      });
+    }
+
+    _hookPost(evt) {
+
+      let _this = this;
+
+      return new BbPromise(function (resolve, reject) {
+
+        console.log('-------------------');
+        console.log('YOUR SERVERLESS PLUGIN\'S CUSTOM "POST" HOOK HAS RUN AFTER "FunctionRun"');
+        console.log('-------------------');
+
+        return resolve(evt);
+
+      });
     }
   }
 
-  //Set environment variables
-  function SetEnvVars(paths, config) {
-    paths.forEach(function(path, idx){
-      var funcName = Path.basename(path, '.js');
-      var func = S.getProject().getFunction(funcName).toObjectPopulated(config);
-      var envVars = func.environment;
-      var fields = Object.keys(envVars);
-      
-      for (var key in fields) {
-        process.env[fields[key]] = envVars[fields[key]];
-      }  
-    });
-  }
-  
-  // Create the test folder
-  function createTestFolder() {
-      return new BbPromise(function(resolve, reject) {
 
-        fs.exists(testFolder, function(exists) {
-            if (exists) {
-                return resolve(testFolder);
-            }
-            fs.mkdir(testFolder, function(err) {
-                if (err) {
-                    return reject(err);
-                }
-                return resolve(testFolder);
-            })
-        })
-      });
-  }
 
-  // Create the test file (and test folder)
+  function newEndPoint(method, path) {
+      return `{
 
-  function createTest(funcName) {
-    return createTestFolder().then(function(testFolder) {
-      return new BbPromise(function(resolve, reject) {
-        let funcFilePath = testFilePath(funcName);
-        let projectPath = S.getProject().getRootPath();
-        let funcFullPath = S.getProject().getFunction(funcName).getRootPath();
-        let funcPath = path.relative(projectPath, funcFullPath);
-
-        fs.exists(funcFilePath, function (exists) {
-           if (exists) {
-               return reject(new Error(`File ${funcFilePath} already exists`));
-           }
-           fs.writeFile(funcFilePath, newTestFile(funcName, funcPath), function(err) {
-               if (err) {
-                   return reject(new Error(`Creating file ${funcFilePath} failed: ${err}`));
-               }
-               console.log(`serverless-mocha-plugin: created ${funcFilePath}`);
-               return resolve(funcFilePath);
-           })
-        });
-      });
-    });
-  }
-
-  // getTestFiles. If no functions provided, returns all files
-  function getFilePaths(funcs) {
-    return new BbPromise(function(resolve, reject) {
-        var paths = [];
-
-        if (funcs && (funcs.length > 0)) {
-            funcs.forEach(function(val, idx) {
-                paths.push(testFilePath(val));
-            });
-            return resolve(paths);
+      "path": "${path}",
+      "method": "${method}",
+      "type": "AWS",
+      "authorizationType": "none",
+      "authorizerFunction": false,
+      "apiKeyRequired": false,
+      "requestParameters": {},
+      "requestTemplates": "",
+      "responses": {
+        "400": {
+          "statusCode": "400"
+        },
+        "default": {
+          "statusCode": "200",
+          "responseParameters": {},
+          "responseModels": {
+            "application/json;charset=UTF-8": "Empty"
+          },
+          "responseTemplates": {
+            "application/json;charset=UTF-8": ""
+          }
         }
-        // No funcs provided, list all test files
-        fs.readdirSync(testFolder).filter(function(file){
-          // Only keep the .js files
-          return file.substr(-3) === '.js';
-        }).forEach(function(file) {
-            paths.push(path.join(testFolder, file));
-        });
-        return resolve(paths);
-    });
-  };
-
-  // Returns the path to a function's test file
-  function testFilePath(funcName) {
-      return path.join(testFolder, `${funcName.replace(/.*\//g, '')}.js`);
-  }
-
-  function newTestFile(funcName, funcPath) {
-      return `'use strict';
-// tests for ${funcName}
-// Generated by serverless-mocha-plugin
-
-const mod         = require('../${funcPath}/handler.js');
-const mochaPlugin = require('serverless-mocha-plugin');
-const wrapper     = mochaPlugin.lambdaWrapper;
-const expect      = mochaPlugin.chai.expect;
-
-wrapper.init(mod);
-
-describe('${funcName}', () => {
-  it('implement tests here', (done) => {
-    wrapper.run({}, (err, response) => {
-      done('no tests implemented');
-    });
-  });
-});
-`;
+      }
+    }
+  `;
 
   }
+
+
   // Export Plugin Class
   return PluginBoilerplate;
 };
-
