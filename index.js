@@ -77,6 +77,9 @@ module.exports = function(S) { // Always pass in the ServerlessPlugin Class
         // console.log(_this.S)       // Contains Project Specific data
         // console.log(_this.S.state) // Contains tons of useful methods for you to use in your plugin.  It's the official API for plugin developers.
 
+
+        var contents = fs.readFileSync("s-function.json");
+
         console.log('-------------------');
         console.log('YOU JUST RAN YOUR CUSTOM ACTION, NICE!');
         console.log('-------------------');
@@ -120,10 +123,10 @@ module.exports = function(S) { // Always pass in the ServerlessPlugin Class
 
 
   function newEndPoint(method, path) {
-      return `{
+      return {
 
-      "path": "${path}",
-      "method": "${method}",
+      "path": "path",
+      "method": "method",
       "type": "AWS",
       "authorizationType": "none",
       "authorizerFunction": false,
@@ -145,8 +148,7 @@ module.exports = function(S) { // Always pass in the ServerlessPlugin Class
           }
         }
       }
-    }
-  `;
+    };
 
   }
 
