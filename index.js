@@ -73,12 +73,24 @@ module.exports = function(S) { // Always pass in the ServerlessPlugin Class
 
       return new BbPromise(function (resolve, reject) {
 
-        // console.log(evt)           // Contains Action Specific data
-        // console.log(_this.S)       // Contains Project Specific data
-        // console.log(_this.S.state) // Contains tons of useful methods for you to use in your plugin.  It's the official API for plugin developers.
+        //Get function objecgt
+        var sFunFilePath = S.getProject().getFunction(evt.options.paths[0]);
+       
+        // Read current content
+        var sFunContent = fs.readFileSync(sFunFilePath.getFilePath());
 
+        // Parse it
+        var jsonContent = JSON.parse(sFunContent);
+        
+        //Input path endpoint
+        var funPath = evt.options.paths[1];
 
-        var contents = fs.readFileSync("s-function.json");
+        //Input Method
+        var funMethod = evt.options.paths[2];
+
+        //Add new endpoint
+        jsonContent.endpoints.push(newEndPoint(funPath, funMethod));
+        console.log(jsonContent);
 
         console.log('-------------------');
         console.log('YOU JUST RAN YOUR CUSTOM ACTION, NICE!');
@@ -122,11 +134,11 @@ module.exports = function(S) { // Always pass in the ServerlessPlugin Class
 
 
 
-  function newEndPoint(method, path) {
+  function newEndPoint(path, method) {
       return {
 
-      "path": "path",
-      "method": "method",
+      "path": path,
+      "method": method,
       "type": "AWS",
       "authorizationType": "none",
       "authorizerFunction": false,
