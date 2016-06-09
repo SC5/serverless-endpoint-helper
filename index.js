@@ -79,30 +79,7 @@ module.exports = function(S) { // Always pass in the ServerlessPlugin Class
         });
         }
 
-        //Get function objecgt
-        var sFunFilePath = S.getProject().getFunction(evt.options.paths[0]);
-       
-        // Read current content
-        var sFunContent = fs.readFileSync(sFunFilePath.getFilePath());
-
-        // Parse it
-        var jsonContent = JSON.parse(sFunContent);
-        
-        //Input path endpoint
-        var funPath = evt.options.paths[1];
-
-        //Input Method
-        var funMethod = evt.options.paths[2];
-
-        //Add new endpoint
-        jsonContent.endpoints.push(newEndPoint(funPath, funMethod));
-        console.log(jsonContent);
-
-        console.log('-------------------');
-        console.log('YOU JUST RAN YOUR CUSTOM ACTION, NICE!');
-        console.log('-------------------');
-
-        return resolve(evt);
+        return addEndPoint(evt);
 
       });
     }
@@ -138,7 +115,27 @@ module.exports = function(S) { // Always pass in the ServerlessPlugin Class
     }
   }
 
+  function addEndPoint(evt){
+            //Get function objecgt
+        var sFunFilePath = S.getProject().getFunction(evt.options.paths[0]);
+       
+        // Read current content
+        var sFunContent = fs.readFileSync(sFunFilePath.getFilePath());
 
+        // Parse it
+        var jsonContent = JSON.parse(sFunContent);
+
+        //Input path endpoint
+        var funPath = evt.options.paths[1];
+
+        //Input Method
+        var funMethod = evt.options.paths[2];
+
+        //Add new endpoint
+        jsonContent.endpoints.push(newEndPoint(funPath, funMethod));
+        console.log(jsonContent);
+
+  }
 
   function newEndPoint(path, method) {
       return {
