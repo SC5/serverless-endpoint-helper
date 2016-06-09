@@ -3,6 +3,7 @@
 
 const path  = require('path'),
   fs        = require('fs'),
+  jsonfile = require('jsonfile'),
   BbPromise = require('bluebird'); // Serverless uses Bluebird Promises and we recommend you do to because they provide more than your average Promise :)
 
 module.exports = function(S) { // Always pass in the ServerlessPlugin Class
@@ -25,7 +26,7 @@ module.exports = function(S) { // Always pass in the ServerlessPlugin Class
 
     constructor() {
       super();
-      this.name = 'myPlugin';
+      this.name = 'io.sc5.endpoint.helper';
     }
 
     registerActions() {
@@ -116,25 +117,37 @@ module.exports = function(S) { // Always pass in the ServerlessPlugin Class
   }
 
   function addEndPoint(evt){
-            //Get function objecgt
-        var sFunFilePath = S.getProject().getFunction(evt.options.paths[0]);
-       
-        // Read current content
-        var sFunContent = fs.readFileSync(sFunFilePath.getFilePath());
+      //Get function object
+      var sFunFilePath = S.getProject().getFunction(evt.options.paths[0]);
+      
+      //Get function path string
+      var funPathString = sFunFilePath.getFilePath();
 
-        // Parse it
-        var jsonContent = JSON.parse(sFunContent);
+      // Read current content
+      var funContent = fs.readFileSync(funPathString);  
+      
+      // Parse it
+      var jsonContent = JSON.parse(funContent);
+      
+      //Input path endpoint
+      var funPath = evt.options.paths[1];
 
-        //Input path endpoint
-        var funPath = evt.options.paths[1];
+      //Input Method      
+      var funMethod = evt.options.paths[2];
 
-        //Input Method
-        var funMethod = evt.options.paths[2];
+      //Add new endpoint
+      jsonContent.endpoints.push(newEndPoint(funPath, funMethod));
+      updateFunction(jsonContent, funPathString);
+      console.log('-------------------');
+      console.log("Endpoint created" + " - " + "Path: " + funPath  +" - " + "Method: " + funMethod );
+      console.log('-------------------');
+  }
 
-        //Add new endpoint
-        jsonContent.endpoints.push(newEndPoint(funPath, funMethod));
-        console.log(jsonContent);
-
+  function updateFunction(content, file){
+      jsonfile.spaces = 4
+      jsonfile.writeFile(file, content, function (err) {
+          //console.error(err);
+      });
   }
 
   function newEndPoint(path, method) {
@@ -166,7 +179,6 @@ module.exports = function(S) { // Always pass in the ServerlessPlugin Class
     };
 
   }
-
 
   // Export Plugin Class
   return PluginBoilerplate;

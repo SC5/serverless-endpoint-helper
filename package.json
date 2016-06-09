@@ -16,12 +16,13 @@
   "author": "Gibran Rodriguez (https://sc5.io)",
   "license": "MIT",
   "engines": {
-      "node": ">=4.0"
-    },
+    "node": ">=4.0"
+  },
   "bin": {},
   "devDependencies": {},
   "dependencies": {
-        "bluebird": "3.0.6",
-        "chai": "3.2.0"
-    }
+    "bluebird": "3.0.6",
+    "chai": "3.2.0",
+    "jsonfile": "^2.3.1"
+  }
 }
