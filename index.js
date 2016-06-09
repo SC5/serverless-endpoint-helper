@@ -73,6 +73,12 @@ module.exports = function(S) { // Always pass in the ServerlessPlugin Class
 
       return new BbPromise(function (resolve, reject) {
 
+        if (S.getProject().getFunction(evt.options.paths[0]) === undefined) {
+          return new BbPromise(function(resolve, reject) {
+          reject(`Endpoint Helper: Function ${evt.options.paths[0]} does not exist in your project`);
+        });
+        }
+
         //Get function objecgt
         var sFunFilePath = S.getProject().getFunction(evt.options.paths[0]);
        
