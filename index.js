@@ -146,7 +146,10 @@ module.exports = function(S) { // Always pass in the ServerlessPlugin Class
   function updateFunction(content, file){
       jsonfile.spaces = 4
       jsonfile.writeFile(file, content, function (err) {
-          //console.error(err);
+          if(err) {
+              return console.log(err);
+          }
+          console.log("Error saving file, enpoint was not created!");
       });
   }
 
