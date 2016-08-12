@@ -54,17 +54,6 @@ module.exports = function(S) { // Always pass in the ServerlessPlugin Class
     }
 
     registerHooks() {
-
-      S.addHook(this._hookPre.bind(this), {
-        action: 'functionRun',
-        event:  'pre'
-      });
-
-      S.addHook(this._hookPost.bind(this), {
-        action: 'functionRun',
-        event:  'post'
-      });
-
       return BbPromise.resolve();
     }
 
@@ -81,36 +70,6 @@ module.exports = function(S) { // Always pass in the ServerlessPlugin Class
         }
 
         return addEndPoint(evt);
-
-      });
-    }
-
-    _hookPre(evt) {
-
-      let _this = this;
-
-      return new BbPromise(function (resolve, reject) {
-
-        console.log('-------------------');
-        console.log('YOUR SERVERLESS PLUGIN\'S CUSTOM "PRE" HOOK HAS RUN BEFORE "FunctionRun"');
-        console.log('-------------------');
-
-        return resolve(evt);
-
-      });
-    }
-
-    _hookPost(evt) {
-
-      let _this = this;
-
-      return new BbPromise(function (resolve, reject) {
-
-        console.log('-------------------');
-        console.log('YOUR SERVERLESS PLUGIN\'S CUSTOM "POST" HOOK HAS RUN AFTER "FunctionRun"');
-        console.log('-------------------');
-
-        return resolve(evt);
 
       });
     }
