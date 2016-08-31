@@ -22,7 +22,6 @@
   "devDependencies": {},
   "dependencies": {
     "bluebird": "3.0.6",
-    "chai": "3.2.0",
-    "jsonfile": "^2.3.1"
+    "chai": "3.2.0"
   }
 }
